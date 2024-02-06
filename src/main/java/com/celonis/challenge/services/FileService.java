@@ -1,8 +1,10 @@
 package com.celonis.challenge.services;
 
 import com.celonis.challenge.exceptions.InternalException;
+import com.celonis.challenge.exceptions.NotFoundException;
 import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.ProjectGenerationTaskRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
@@ -15,21 +17,23 @@ import java.io.*;
 import java.net.URL;
 
 @Component
+@Slf4j
 public class FileService {
-
-    private final TaskService taskService;
+    /* TODO this class needs to be refactored, maybe moving extracting files-related activities to a separate class
+     and move all tasks persistence and loading to TaskService */
 
     private final ProjectGenerationTaskRepository projectGenerationTaskRepository;
 
-    public FileService(TaskService taskService,
-                       ProjectGenerationTaskRepository projectGenerationTaskRepository) {
-        this.taskService = taskService;
+    public FileService(ProjectGenerationTaskRepository projectGenerationTaskRepository) {
         this.projectGenerationTaskRepository = projectGenerationTaskRepository;
     }
 
     public ResponseEntity<FileSystemResource> getTaskResult(String taskId) {
-        ProjectGenerationTask projectGenerationTask = taskService.getTask(taskId);
-        File inputFile = new File(projectGenerationTask.getStorageLocation());
+        log.info("Getting task {} result", taskId);
+        ProjectGenerationTask projectGenerationTask = projectGenerationTaskRepository.findById(taskId)
+                .orElseThrow(NotFoundException::new);
+        File inputFile = new File(projectGenerationTask.getStorageLocation() == null ?
+                "" : projectGenerationTask.getStorageLocation());
 
         if (!inputFile.exists()) {
             throw new InternalException("File not generated yet");
@@ -43,7 +47,9 @@ public class FileService {
     }
 
     public void storeResult(String taskId, URL url) throws IOException {
-        ProjectGenerationTask projectGenerationTask = taskService.getTask(taskId);
+        log.info("Storing result of task: {}", taskId);
+        ProjectGenerationTask projectGenerationTask = projectGenerationTaskRepository.findById(taskId)
+                .orElseThrow(NotFoundException::new);
         File outputFile = File.createTempFile(taskId, ".zip");
         outputFile.deleteOnExit();
         projectGenerationTask.setStorageLocation(outputFile.getAbsolutePath());
