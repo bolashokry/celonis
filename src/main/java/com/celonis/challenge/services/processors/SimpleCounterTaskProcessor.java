@@ -68,6 +68,20 @@ public class SimpleCounterTaskProcessor implements TaskProcessor {
         return toResultString(savedTask);
     }
 
+    @Override
+    public void cancel(String taskId) {
+        load(taskId)
+                .filter(task -> List.of(NEW, IN_PROGRESS).contains(task.getStatus()))
+                .ifPresentOrElse(task -> {
+                    task.setStatus(CANCELLED);
+                    SimpleCounterTask inProgressTask = inProgressTasks.get(taskId);
+                    if (inProgressTask != null) {
+                        task.setProgress(inProgressTask.getProgress());
+                    }
+                    simpleCounterTaskRepository.save(task);
+                }, () -> log.info("Can't find task {}, or it is not cancellable", taskId));
+    }
+
     private String toResultString(SimpleCounterTask task) {
         return new StringBuilder()
                 .append("Name: ")

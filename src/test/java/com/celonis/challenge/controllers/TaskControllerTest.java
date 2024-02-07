@@ -4,6 +4,7 @@ import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.SimpleCounterTask;
 import com.celonis.challenge.model.Task;
 import com.celonis.challenge.model.TaskType;
+import com.celonis.challenge.model.repo.SimpleCounterTaskRepository;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,6 +25,7 @@ import static com.celonis.challenge.model.TaskStatus.NEW;
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("integration-test")
 class TaskControllerTest {
 
     @Value("http://localhost:${local.server.port}/api/tasks/")
@@ -33,6 +36,9 @@ class TaskControllerTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
+
+    @Autowired
+    private SimpleCounterTaskRepository simpleCounterTaskRepository;
 
     @BeforeEach
     void setUp() {
@@ -219,7 +225,7 @@ class TaskControllerTest {
         MatcherAssert.assertThat(firstResponse.getBody(), Matchers.containsString("Status: IN_PROGRESS"));
 
         // when
-        Thread.sleep(3500);
+        Thread.sleep(2500);
         ResponseEntity<String> secondResponse = restTemplate.exchange(
                 localhostBaseUrl + savedTaskId + "/result", HttpMethod.GET, new HttpEntity<>(headers),
                 String.class);
@@ -229,7 +235,61 @@ class TaskControllerTest {
         MatcherAssert.assertThat(secondResponse.getBody(), Matchers.notNullValue());
         MatcherAssert.assertThat(secondResponse.getBody(), Matchers.containsString("Progress: 12"));
         MatcherAssert.assertThat(secondResponse.getBody(), Matchers.containsString("Status: COMPLETED"));
+    }
 
+    @Test
+    public void shouldCancelInProgressTasks() throws InterruptedException {
+        // given
+        SimpleCounterTask task = new SimpleCounterTask();
+        task.setName("test task");
+        task.setType(TaskType.SIMPLE_COUNTER);
+        task.setX(10);
+        task.setY(15);
+        String savedTaskId = Objects.requireNonNull(createTask(task, SimpleCounterTask.class).getBody()).getId();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_NAME, HEADER_VALUE);
+        restTemplate.exchange(
+                localhostBaseUrl + savedTaskId + "/execute", HttpMethod.POST, new HttpEntity<>(headers),
+                Void.class);
+        restTemplate.exchange(
+                localhostBaseUrl + savedTaskId + "/cancel", HttpMethod.POST, new HttpEntity<>(headers),
+                Void.class);
+
+        // when
+        Thread.sleep(1000);
+        ResponseEntity<String> secondResponse = restTemplate.exchange(
+                localhostBaseUrl + savedTaskId + "/result", HttpMethod.GET, new HttpEntity<>(headers),
+                String.class);
+
+        // then
+        MatcherAssert.assertThat(secondResponse.getStatusCode(), equalTo(HttpStatus.OK));
+        MatcherAssert.assertThat(secondResponse.getBody(), Matchers.notNullValue());
+        MatcherAssert.assertThat(secondResponse.getBody(), Matchers.containsString("Status: CANCELLED"));
+    }
+
+    @Test
+    public void shouldPurgeOldTasks() throws InterruptedException {
+        // given
+        SimpleCounterTask task1 = new SimpleCounterTask();
+        task1.setName("test task");
+        task1.setType(TaskType.SIMPLE_COUNTER);
+        task1.setX(10);
+        task1.setY(15);
+        String savedTask1Id = Objects.requireNonNull(createTask(task1, SimpleCounterTask.class).getBody()).getId();
+
+        Thread.sleep(2500);
+        // given
+        SimpleCounterTask task2 = new SimpleCounterTask();
+        task2.setName("test task");
+        task2.setType(TaskType.SIMPLE_COUNTER);
+        task2.setX(10);
+        task2.setY(15);
+        String savedTask2Id = Objects.requireNonNull(createTask(task2, SimpleCounterTask.class).getBody()).getId();
+
+        List<SimpleCounterTask> tasks = simpleCounterTaskRepository.findAll();
+        MatcherAssert.assertThat(tasks.size(), equalTo(1));
+        MatcherAssert.assertThat(tasks.get(0).getId(), equalTo(savedTask2Id));
     }
 
     private <T extends Task> ResponseEntity<T> createTask(T task, Class<T> taskType) {

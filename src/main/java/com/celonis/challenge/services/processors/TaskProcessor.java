@@ -16,4 +16,6 @@ public interface TaskProcessor {
     void execute(String taskId);
 
     String getResult(String taskId);
+
+    void cancel(String taskId);
 }

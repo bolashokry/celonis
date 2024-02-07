@@ -4,12 +4,15 @@ import com.celonis.challenge.exceptions.NotFoundException;
 import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.Task;
 import com.celonis.challenge.model.TaskWrapper;
+import com.celonis.challenge.model.repo.ProjectGenerationTaskRepository;
+import com.celonis.challenge.model.repo.SimpleCounterTaskRepository;
 import com.celonis.challenge.services.processors.ProcessorResolver;
 import com.celonis.challenge.services.processors.TaskProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -21,10 +24,17 @@ import static com.celonis.challenge.model.TaskStatus.NEW;
 public class TaskService {
 
     private final ProcessorResolver processorResolver;
+    private final ProjectGenerationTaskRepository projectGenerationTaskRepository;
+    private final SimpleCounterTaskRepository simpleCounterTaskRepository;
 
-    public List<ProjectGenerationTask> listTasks() {
+    public List<TaskWrapper> listTasks() {
         log.info("List all tasks");
-        throw new UnsupportedOperationException("to be implemented");
+        final List<TaskWrapper> allTasks = new ArrayList<>();
+        projectGenerationTaskRepository.findAll()
+                .forEach(task -> allTasks.add(new TaskWrapper(task)));
+        simpleCounterTaskRepository.findAll()
+                .forEach(task -> allTasks.add(new TaskWrapper(task)));
+        return allTasks;
     }
 
     public Task createTask(Task task) {
@@ -61,6 +71,12 @@ public class TaskService {
     public String getResult(String taskId) {
         log.info("Getting result of task: {}", taskId);
         return getProcessor(taskId).getResult(taskId);
+    }
+
+    public void cancelTask(String taskId) {
+        log.info("Cancelling task: {}", taskId);
+        getProcessor(taskId).cancel(taskId);
+
     }
 
     private TaskProcessor getProcessor(Task task) {

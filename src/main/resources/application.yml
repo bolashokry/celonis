@@ -1,0 +1,5 @@
+task.purge:
+  # 604800 s = 1 week
+  threshold-in-seconds: 604800
+  ## 86400000 = 1 day
+  frequency-in-milliseconds: 86400000

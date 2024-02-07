@@ -1,0 +1,3 @@
+task.purge:
+  threshold-in-seconds: 1
+  frequency-in-milliseconds: 1000

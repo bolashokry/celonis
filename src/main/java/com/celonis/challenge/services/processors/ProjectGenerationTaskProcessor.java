@@ -52,4 +52,9 @@ public class ProjectGenerationTaskProcessor implements TaskProcessor {
     public String getResult(String taskId) {
         return fileService.getTaskResult(taskId);
     }
+
+    @Override
+    public void cancel(String taskId) {
+        log.info("Project generation tasks can't be cancelled");
+    }
 }

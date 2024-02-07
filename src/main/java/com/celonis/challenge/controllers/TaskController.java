@@ -1,8 +1,7 @@
 package com.celonis.challenge.controllers;
 
-import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.Task;
-import com.celonis.challenge.services.FileService;
+import com.celonis.challenge.model.TaskWrapper;
 import com.celonis.challenge.services.TaskService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,13 +18,12 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    public TaskController(TaskService taskService,
-                          FileService fileService) {
+    public TaskController(TaskService taskService) {
         this.taskService = taskService;
     }
 
     @GetMapping("/")
-    public List<ProjectGenerationTask> listTasks() {
+    public List<TaskWrapper> listTasks() {
         return taskService.listTasks();
     }
 
@@ -62,6 +60,12 @@ public class TaskController {
         HttpHeaders respHeaders = new HttpHeaders();
         respHeaders.setContentType(MediaType.TEXT_PLAIN);
         return new ResponseEntity<>(taskService.getResult(taskId), respHeaders, HttpStatus.OK);
+    }
+
+    @PostMapping("/{taskId}/cancel")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelTask(@PathVariable String taskId) {
+        taskService.cancelTask(taskId);
     }
 
 }
