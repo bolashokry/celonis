@@ -28,6 +28,10 @@ import static org.hamcrest.Matchers.*;
 @ActiveProfiles("integration-test")
 class TaskControllerTest {
 
+    /*
+        Due to the time constrains, only the happy scenarios are covered here.
+     */
+
     @Value("http://localhost:${local.server.port}/api/tasks/")
     private String localhostBaseUrl;
 
@@ -47,11 +51,10 @@ class TaskControllerTest {
                 .setMessageConverters(List.of(new MappingJackson2HttpMessageConverter(), new StringHttpMessageConverter()));
     }
 
-    // TODO add test cases for wrong scenarios, for example, delete or get not existing tasks
+    // TODO create helper method for tasks creation, request preparations, etc..
 
     @Test
     void shouldSaveProjectGenerationTask() {
-        // TODO create helper method for tasks creation
         ProjectGenerationTask task = new ProjectGenerationTask();
         task.setName("test task");
         task.setType(TaskType.PROJECT_GENERATION);
