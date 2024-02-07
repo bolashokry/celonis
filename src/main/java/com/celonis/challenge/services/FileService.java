@@ -7,10 +7,6 @@ import com.celonis.challenge.model.repo.ProjectGenerationTaskRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -28,7 +24,7 @@ public class FileService {
         this.projectGenerationTaskRepository = projectGenerationTaskRepository;
     }
 
-    public ResponseEntity<FileSystemResource> getTaskResult(String taskId) {
+    public String getTaskResult(String taskId) {
         log.info("Getting task {} result", taskId);
         ProjectGenerationTask projectGenerationTask = projectGenerationTaskRepository.findById(taskId)
                 .orElseThrow(NotFoundException::new);
@@ -39,11 +35,11 @@ public class FileService {
             throw new InternalException("File not generated yet");
         }
 
-        HttpHeaders respHeaders = new HttpHeaders();
-        respHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        respHeaders.setContentDispositionFormData("attachment", "challenge.zip");
-
-        return new ResponseEntity<>(new FileSystemResource(inputFile), respHeaders, HttpStatus.OK);
+        try {
+            return new String(new FileSystemResource(inputFile).getInputStream().readAllBytes());
+        } catch (IOException ex) {
+            throw new InternalException("Couldn't read file contents");
+        }
     }
 
     public void storeResult(String taskId, URL url) throws IOException {

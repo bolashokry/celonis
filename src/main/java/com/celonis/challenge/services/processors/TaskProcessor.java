@@ -12,4 +12,8 @@ public interface TaskProcessor {
     Optional<? extends Task> load(String taskId);
 
     void delete(String taskId);
+
+    void execute(String taskId);
+
+    String getResult(String taskId);
 }

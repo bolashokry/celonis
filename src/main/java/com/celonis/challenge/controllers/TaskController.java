@@ -4,8 +4,9 @@ import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.Task;
 import com.celonis.challenge.services.FileService;
 import com.celonis.challenge.services.TaskService;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,12 +19,9 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    private final FileService fileService;
-
     public TaskController(TaskService taskService,
                           FileService fileService) {
         this.taskService = taskService;
-        this.fileService = fileService;
     }
 
     @GetMapping("/")
@@ -43,7 +41,7 @@ public class TaskController {
 
     @PutMapping("/{taskId}")
     public Task updateTask(@PathVariable String taskId,
-                                            @RequestBody @Valid Task projectGenerationTask) {
+                           @RequestBody @Valid Task projectGenerationTask) {
         return taskService.update(taskId, projectGenerationTask);
     }
 
@@ -60,8 +58,10 @@ public class TaskController {
     }
 
     @GetMapping("/{taskId}/result")
-    public ResponseEntity<FileSystemResource> getResult(@PathVariable String taskId) {
-        return fileService.getTaskResult(taskId);
+    public ResponseEntity<String> getResult(@PathVariable String taskId) {
+        HttpHeaders respHeaders = new HttpHeaders();
+        respHeaders.setContentType(MediaType.TEXT_PLAIN);
+        return new ResponseEntity<>(taskService.getResult(taskId), respHeaders, HttpStatus.OK);
     }
 
 }

@@ -1,6 +1,5 @@
 package com.celonis.challenge.services;
 
-import com.celonis.challenge.exceptions.InternalException;
 import com.celonis.challenge.exceptions.NotFoundException;
 import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.Task;
@@ -11,9 +10,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.net.URL;
 import java.util.Date;
 import java.util.List;
+
+import static com.celonis.challenge.model.TaskStatus.NEW;
 
 @Service
 @RequiredArgsConstructor
@@ -21,8 +21,6 @@ import java.util.List;
 public class TaskService {
 
     private final ProcessorResolver processorResolver;
-
-    private final FileService fileService;
 
     public List<ProjectGenerationTask> listTasks() {
         log.info("List all tasks");
@@ -33,6 +31,7 @@ public class TaskService {
         log.info("Creating task: {}", task);
         task.setId(null);
         task.setCreationDate(new Date());
+        task.setStatus(NEW);
         return getProcessor(task).save(new TaskWrapper(task));
     }
 
@@ -56,15 +55,12 @@ public class TaskService {
 
     public void executeTask(String taskId) {
         log.info("Executing task: {}", taskId);
-        URL url = Thread.currentThread().getContextClassLoader().getResource("challenge.zip");
-        if (url == null) {
-            throw new InternalException("Zip file not found");
-        }
-        try {
-            fileService.storeResult(taskId, url);
-        } catch (Exception e) {
-            throw new InternalException(e);
-        }
+        getProcessor(taskId).execute(taskId);
+    }
+
+    public String getResult(String taskId) {
+        log.info("Getting result of task: {}", taskId);
+        return getProcessor(taskId).getResult(taskId);
     }
 
     private TaskProcessor getProcessor(Task task) {

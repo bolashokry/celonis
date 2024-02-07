@@ -13,4 +13,9 @@ import javax.persistence.Entity;
 public class SimpleCounterTask extends Task {
     private int x;
     private int y;
+    private int progress;
+
+    public void incrementProgress() {
+        progress++;
+    }
 }

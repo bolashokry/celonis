@@ -26,4 +26,6 @@ public abstract class Task {
     private Date creationDate;
 
     private TaskType type;
+
+    private TaskStatus status;
 }
