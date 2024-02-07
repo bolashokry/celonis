@@ -33,19 +33,24 @@ public class TaskPurgeService {
     private final SimpleCounterTaskRepository simpleCounterTaskRepository;
 
 
+    /*
+        In a real microservice application, I'd use cloud-based event (i.e. cloud watch) rather than
+        spring boot's schedule
+     */
     @Async
     @Scheduled(fixedRateString = "${task.purge.frequency-in-milliseconds}")
     public void purgeOutDatedTasks() {
         log.info("Purging the too old tasks..");
+
+        /*
+        There is no need to load the to-be-deleted entities then delete them. They could be deleted directly
+            using the repository, but I did it this way just for logging purpose.
+        */
+
         final List<ProjectGenerationTask> toBeDeletedProjectGenerationTasks = projectGenerationTaskRepository
                 .findByStatusInAndCreationDateLessThan(List.of(NEW),
                         DateUtils.addSeconds(new Date(), -purgeThresholdInSeconds));
 
-        final List<SimpleCounterTask> allTasks = simpleCounterTaskRepository.findAll();
-        log.info("All Tasks {}", allTasks);
-
-
-        log.info("Get all tasks creation date less than {}", DateUtils.addSeconds(new Date(), -purgeThresholdInSeconds));
         final List<SimpleCounterTask> toBeDeletedSimpleCounterTasks = simpleCounterTaskRepository
                 .findByStatusInAndCreationDateLessThan(List.of(NEW),
                         DateUtils.addSeconds(new Date(), -purgeThresholdInSeconds));

@@ -1,6 +1,5 @@
 package com.celonis.challenge.model.repo;
 
-import com.celonis.challenge.model.ProjectGenerationTask;
 import com.celonis.challenge.model.SimpleCounterTask;
 import com.celonis.challenge.model.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;

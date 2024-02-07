@@ -16,6 +16,13 @@ import java.util.List;
 @RequestMapping("/api/tasks")
 public class TaskController {
 
+    /*
+    * That part of "keep existing behavior and API" in the requirement document has confused me a little.
+    * For example, I hesitated should I use the same end point for creating both task types or to separate end point for each.
+    * Finally, I opted to use the same endpoint and differentiate between task types by a new field "type" in the request body.
+    * I had also to modify the request body type and sometimes the return type of some methods to match my decision.
+    *  */
+
     private final TaskService taskService;
 
     public TaskController(TaskService taskService) {

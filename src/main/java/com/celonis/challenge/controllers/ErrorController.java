@@ -35,7 +35,6 @@ public class ErrorController {
         return "Internal error";
     }
 
-    // TODO add handling for "File not generated yet" error
-    // TODO add handling for "Zip file not found" error
+    // TODO add handling for other types of exceptions thrown from the application
 
 }

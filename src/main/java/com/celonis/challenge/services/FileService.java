@@ -15,8 +15,8 @@ import java.net.URL;
 @Component
 @Slf4j
 public class FileService {
-    /* TODO this class needs to be refactored, maybe moving extracting files-related activities to a separate class
-     and move all tasks persistence and loading to TaskService */
+    /* TODO this class needs to be refactored, maybe extracting files-related activities to a separate util class
+            and move all tasks persistence and loading to ProjectGenerationTaskProcessor */
 
     private final ProjectGenerationTaskRepository projectGenerationTaskRepository;
 

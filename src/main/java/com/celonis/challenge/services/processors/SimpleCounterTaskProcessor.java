@@ -19,6 +19,18 @@ import static com.celonis.challenge.model.TaskStatus.*;
 public class SimpleCounterTaskProcessor implements TaskProcessor {
 
     private final SimpleCounterTaskRepository simpleCounterTaskRepository;
+
+    /*
+        This map is used to do the in-memory second-based increments. The map is reflected in the DB once the task is
+            completed or cancelled. This way I can avoid hitting the DB every second for evdery task.
+        This could have been implemented in other different ways.
+        1- Do not do real increments at all, and rely on calculating the current progress at run-time by
+            subtracting now - task creation date. This is the most efficient solution, but I didn't implement it this way
+            because I don't think you wanted it like this.
+        2- Hit the database every second to avoid any data lose, but this comes on the cost of performance.
+
+        In a real microservice application I'd suggest implementing this using distributed in-memory DB (i.e. redis)
+     */
     private final Map<String, SimpleCounterTask> inProgressTasks = new HashMap<>();
     private final static int PROGRESS_STEP_IN_MILLIS = 1000;
 
@@ -47,6 +59,10 @@ public class SimpleCounterTaskProcessor implements TaskProcessor {
         load(taskId)
                 .filter(task -> NEW.equals(task.getStatus()))
                 .ifPresentOrElse(task -> {
+                    /*
+                    The sync between inProgressTasks map and the DB could have been done better than this
+                        but again, the time constraint
+                     */
                     inProgressTasks.put(taskId, task);
                     task.setStatus(IN_PROGRESS);
                     simpleCounterTaskRepository.save(task);

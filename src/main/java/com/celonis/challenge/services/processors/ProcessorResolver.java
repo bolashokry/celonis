@@ -16,6 +16,10 @@ public class ProcessorResolver {
     private final ProjectGenerationTaskRepository projectGenerationTaskRepository;
     private final SimpleCounterTaskRepository simpleCounterTaskRepository;
 
+    /*
+        The same comment left in TaskWrapper applies here as well. If it is expected to have multiple task types
+        I'd have used only 1 entity, 1 repo, and the different fields will be in a json payload.
+     */
     public TaskProcessor resolve(Task task) {
         switch (task.getType()) {
             case PROJECT_GENERATION:
@@ -28,8 +32,8 @@ public class ProcessorResolver {
     }
 
     /* Better solution here is to create a separate table of <task_id and task_type> to be able to resolve
-        task type directly by id without the need to check its existence in every task-type table.
-        This solution has been omitted due to time constrains.
+        task type directly by id without the need to check its existence in each table separately.
+        But I had to go with this dirty one due to the time constraint.
      */
     public TaskProcessor resolveById(String id) {
         if (projectGenerationTaskRepository.existsById(id)) {
