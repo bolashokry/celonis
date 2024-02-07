@@ -3,57 +3,55 @@ package com.celonis.challenge.services;
 import com.celonis.challenge.exceptions.InternalException;
 import com.celonis.challenge.exceptions.NotFoundException;
 import com.celonis.challenge.model.ProjectGenerationTask;
-import com.celonis.challenge.model.ProjectGenerationTaskRepository;
+import com.celonis.challenge.model.Task;
+import com.celonis.challenge.model.TaskWrapper;
+import com.celonis.challenge.services.processors.ProcessorResolver;
+import com.celonis.challenge.services.processors.TaskProcessor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class TaskService {
 
-    private final ProjectGenerationTaskRepository projectGenerationTaskRepository;
+    private final ProcessorResolver processorResolver;
 
     private final FileService fileService;
-    
-    public TaskService(ProjectGenerationTaskRepository projectGenerationTaskRepository,
-                       FileService fileService) {
-        this.projectGenerationTaskRepository = projectGenerationTaskRepository;
-        this.fileService = fileService;
-    }
 
     public List<ProjectGenerationTask> listTasks() {
         log.info("List all tasks");
-        return projectGenerationTaskRepository.findAll();
+        throw new UnsupportedOperationException("to be implemented");
     }
 
-    public ProjectGenerationTask createTask(ProjectGenerationTask projectGenerationTask) {
-        log.info("Creating task: {}", projectGenerationTask);
-        projectGenerationTask.setId(null);
-        projectGenerationTask.setCreationDate(new Date());
-        return projectGenerationTaskRepository.save(projectGenerationTask);
+    public Task createTask(Task task) {
+        log.info("Creating task: {}", task);
+        task.setId(null);
+        task.setCreationDate(new Date());
+        return getProcessor(task).save(new TaskWrapper(task));
     }
 
-    public ProjectGenerationTask getTask(String taskId) {
+    public Task getTask(String taskId) {
         log.info("Getting task: {}", taskId);
-        return get(taskId);
+        return getProcessor(taskId).load(taskId).orElseThrow(NotFoundException::new);
     }
 
-    public ProjectGenerationTask update(String taskId, ProjectGenerationTask projectGenerationTask) {
-        log.info("Updating task: {} with value: {}", taskId, projectGenerationTask);
-        ProjectGenerationTask existing = get(taskId);
-        existing.setCreationDate(projectGenerationTask.getCreationDate());
-        existing.setName(projectGenerationTask.getName());
-        return projectGenerationTaskRepository.save(existing);
+    public Task update(String taskId, Task task) {
+        log.info("Updating task: {} with value: {}", taskId, task);
+        Task existingTask = getTask(taskId);
+        existingTask.setCreationDate(task.getCreationDate());
+        existingTask.setName(task.getName());
+        return getProcessor(existingTask).save(new TaskWrapper(task));
     }
 
     public void delete(String taskId) {
         log.info("Deleting task: {}", taskId);
-        projectGenerationTaskRepository.deleteById(taskId);
+        getProcessor(taskId).delete(taskId);
     }
 
     public void executeTask(String taskId) {
@@ -69,8 +67,12 @@ public class TaskService {
         }
     }
 
-    private ProjectGenerationTask get(String taskId) {
-        Optional<ProjectGenerationTask> projectGenerationTask = projectGenerationTaskRepository.findById(taskId);
-        return projectGenerationTask.orElseThrow(NotFoundException::new);
+    private TaskProcessor getProcessor(Task task) {
+        return processorResolver.resolve(task);
     }
+
+    private TaskProcessor getProcessor(String taskId) {
+        return processorResolver.resolveById(taskId);
+    }
+
 }

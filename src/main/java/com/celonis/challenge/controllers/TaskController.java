@@ -1,6 +1,7 @@
 package com.celonis.challenge.controllers;
 
 import com.celonis.challenge.model.ProjectGenerationTask;
+import com.celonis.challenge.model.Task;
 import com.celonis.challenge.services.FileService;
 import com.celonis.challenge.services.TaskService;
 import org.springframework.core.io.FileSystemResource;
@@ -31,18 +32,18 @@ public class TaskController {
     }
 
     @PostMapping("/")
-    public ProjectGenerationTask createTask(@RequestBody @Valid ProjectGenerationTask projectGenerationTask) {
-        return taskService.createTask(projectGenerationTask);
+    public Task createTask(@RequestBody @Valid Task task) {
+        return taskService.createTask(task);
     }
 
     @GetMapping("/{taskId}")
-    public ProjectGenerationTask getTask(@PathVariable String taskId) {
+    public Task getTask(@PathVariable String taskId) {
         return taskService.getTask(taskId);
     }
 
     @PutMapping("/{taskId}")
-    public ProjectGenerationTask updateTask(@PathVariable String taskId,
-                                            @RequestBody @Valid ProjectGenerationTask projectGenerationTask) {
+    public Task updateTask(@PathVariable String taskId,
+                                            @RequestBody @Valid Task projectGenerationTask) {
         return taskService.update(taskId, projectGenerationTask);
     }
 
